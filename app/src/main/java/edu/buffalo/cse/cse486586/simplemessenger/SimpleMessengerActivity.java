@@ -1,13 +1,19 @@
 package edu.buffalo.cse.cse486586.simplemessenger;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-
-import edu.buffalo.cse.cse486586.simplemessenger.R;
 
 import android.app.Activity;
 import android.content.Context;
@@ -146,17 +152,32 @@ public class SimpleMessengerActivity extends Activity {
      * @author stevko
      *
      */
-    private class ServerTask extends AsyncTask<ServerSocket, String, Void> {
+    private class ServerTask extends AsyncTask<ServerSocket, String, Boolean> {
 
         @Override
-        protected Void doInBackground(ServerSocket... sockets) {
+        protected Boolean doInBackground(ServerSocket... sockets) {
             ServerSocket serverSocket = sockets[0];
+            String Message;
             
             /*
              * TODO: Fill in your server code that receives messages and passes them
              * to onProgressUpdate().
              */
-            return null;
+            while (true)
+            {
+                try {
+                    Socket newsocket = serverSocket.accept();
+                    DataInputStream input = new DataInputStream(newsocket.getInputStream());
+                    Message = input.readUTF();
+                    input.close();
+
+                    publishProgress(Message);
+
+                    newsocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         protected void onProgressUpdate(String...strings) {
@@ -216,7 +237,11 @@ public class SimpleMessengerActivity extends Activity {
                 /*
                  * TODO: Fill in your client code that sends out a message.
                  */
-                socket.close();
+
+                DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+                output.writeUTF(msgToSend);
+                output.close();
+
             } catch (UnknownHostException e) {
                 Log.e(TAG, "ClientTask UnknownHostException");
             } catch (IOException e) {
